@@ -1,0 +1,21 @@
+# RAG Chatbot
+
+A monorepo for a Retrieval-Augmented Generation (RAG) application consisting of a FastAPI backend and a Next.js frontend.
+
+## Structure
+
+- `/backend` - The FastAPI server connecting to Pinecone and OpenAI.
+- `/frontend` - The Next.js web application built with React and Tailwind CSS (or similar).
+
+## Getting Started
+
+### Backend
+1. Go to the `backend` directory.
+2. Ensure you have the Python environment set up (e.g., using `uv`).
+3. Copy `.example.env` to `.env` and fill in your API keys.
+4. Run the server.
+
+### Frontend
+1. Go to the `frontend` directory.
+2. Install dependencies: `npm install`.
+3. Start the development server: `npm run dev`.

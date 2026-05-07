@@ -1,0 +1,15 @@
+[project]
+name = "RAG-ChatBot-Backend"
+version = "0.1.0"
+description = "A simple FastAPI Backend for RAG ChatBot"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.136.1",
+    "numpy>=2.4.4",
+    "openai>=2.34.0",
+    "pinecone>=9.0.0",
+    "pydantic-settings>=2.14.0",
+    "pymupdf>=1.27.2.3",
+    "python-multipart>=0.0.27",
+]

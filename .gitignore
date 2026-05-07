@@ -1,0 +1,5 @@
+# Root level ignores
+.vscode/
+.idea/
+.DS_Store
+*.log
