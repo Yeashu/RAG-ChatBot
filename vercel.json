@@ -1,30 +1,14 @@
 {
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/next"
+  "experimentalServices": {
+    "frontend": {
+      "entrypoint": "frontend",
+      "routePrefix": "/",
+      "framework": "nextjs"
     },
-    {
-      "src": "backend/app/main.py",
-      "use": "@vercel/python"
+    "backend": {
+      "entrypoint": "backend/app/main.py",
+      "routePrefix": "/_/backend",
+      "framework": "fastapi"
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/health",
-      "destination": "/backend/app/main.py"
-    },
-    {
-      "source": "/upload",
-      "destination": "/backend/app/main.py"
-    },
-    {
-      "source": "/chat",
-      "destination": "/backend/app/main.py"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/frontend/$1"
-    }
-  ]
+  }
 }
