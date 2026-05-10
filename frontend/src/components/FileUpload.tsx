@@ -31,11 +31,12 @@ export function FileUpload({ onUpload, isLoading }: FileUploadProps) {
 
       if (e.dataTransfer.files && e.dataTransfer.files[0]) {
         const file = e.dataTransfer.files[0];
-        if (file.type === "application/pdf") {
+        const allowedTypes = ["application/pdf", "text/plain", "text/csv"];
+        if (allowedTypes.includes(file.type) || file.name.endsWith(".csv") || file.name.endsWith(".txt")) {
           setSelectedFile(file);
           onUpload(file);
         } else {
-          alert("Please upload a PDF file.");
+          alert("Please upload a PDF, TXT, or CSV file.");
         }
       }
     },
@@ -47,11 +48,12 @@ export function FileUpload({ onUpload, isLoading }: FileUploadProps) {
       e.preventDefault();
       if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        if (file.type === "application/pdf") {
+        const allowedTypes = ["application/pdf", "text/plain", "text/csv"];
+        if (allowedTypes.includes(file.type) || file.name.endsWith(".csv") || file.name.endsWith(".txt")) {
           setSelectedFile(file);
           onUpload(file);
         } else {
-          alert("Please upload a PDF file.");
+          alert("Please upload a PDF, TXT, or CSV file.");
         }
       }
     },
@@ -70,7 +72,7 @@ export function FileUpload({ onUpload, isLoading }: FileUploadProps) {
         <input
           type="file"
           id="file-upload"
-          accept="application/pdf"
+          accept=".pdf,.txt,.csv"
           className={styles.fileInput}
           onChange={handleChange}
           disabled={isLoading}
@@ -89,7 +91,7 @@ export function FileUpload({ onUpload, isLoading }: FileUploadProps) {
           ) : (
             <div className={styles.stateWrapper}>
               <UploadCloud className={styles.icon} />
-              <p>Drag and drop your PDF here</p>
+              <p>Drag and drop PDF, TXT or CSV here</p>
               <span className={styles.subText}>or click to browse</span>
             </div>
           )}

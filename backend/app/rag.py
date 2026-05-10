@@ -44,10 +44,20 @@ async def get_embeddings(
 async def process_and_upsert_document(
     openai_client: AsyncOpenAI,
     pinecone_index,
-    pdf_bytes: bytes,
+    file_bytes: bytes,
+    filename: str,
+    content_type: str,
 ) -> tuple[str, int]:
     document_id = str(uuid.uuid4())
-    page_texts = extract_text_from_pdf(pdf_bytes)
+    
+    if content_type == "application/pdf":
+        page_texts = extract_text_from_pdf(file_bytes)
+    elif content_type in ["text/plain", "text/csv"]:
+        # For plain text or CSV, we treat the whole content as one "page" for simplicity
+        # or we could split by lines. For now, let's keep it simple.
+        page_texts = [file_bytes.decode('utf-8', errors='ignore')]
+    else:
+        page_texts = []
     
     vectors = []
     chunk_count = 0

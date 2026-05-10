@@ -63,33 +63,40 @@ async def health():
 @app.post("/upload", response_model=UploadResponse)
 async def upload(file: UploadFile):
     # Validate content type
-    if file.content_type != "application/pdf":
+    allowed_content_types = [
+        "application/pdf",
+        "text/plain",
+        "text/csv",
+    ]
+    if file.content_type not in allowed_content_types:
         raise HTTPException(
             status_code=400,
-            detail="Only PDF files are accepted.",
+            detail=f"Only PDF, TXT, and CSV files are accepted. Received: {file.content_type}",
         )
 
     # Read and validate file size
-    pdf_bytes = await file.read()
+    file_bytes = await file.read()
     max_bytes = settings.MAX_FILE_SIZE_MB * 1024 * 1024
-    if len(pdf_bytes) > max_bytes:
+    if len(file_bytes) > max_bytes:
         raise HTTPException(
             status_code=413,
             detail=f"File exceeds the {settings.MAX_FILE_SIZE_MB} MB limit.",
         )
 
-    if not pdf_bytes:
+    if not file_bytes:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
     document_id, chunk_count = await process_and_upsert_document(
         openai_client=app.state.openai,
         pinecone_index=app.state.index,
-        pdf_bytes=pdf_bytes,
+        file_bytes=file_bytes,
+        filename=file.filename or "unknown",
+        content_type=file.content_type,
     )
 
     return UploadResponse(
         document_id=document_id,
-        filename=file.filename or "unknown.pdf",
+        filename=file.filename or "unknown",
         chunks=chunk_count,
     )
 
