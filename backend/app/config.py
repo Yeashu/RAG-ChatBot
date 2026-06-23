@@ -2,14 +2,16 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    GEMINI_API_KEY: str
-    API_URL: str
+    # OpenRouter / OpenAI-compatible LLM
+    OPENAI_API_KEY: str
+    OPENAI_BASE_URL: str
+    OPENAI_MODEL: str
 
-    LLM_MODEL: str
+    # Embedding model (separate — OpenRouter doesn't support embeddings)
     EMBEDDING_MODEL: str
-
     DIMENSIONS: int
 
+    # Pinecone
     PINECONE_API_KEY: str
     PINECONE_INDEX_NAME: str
 

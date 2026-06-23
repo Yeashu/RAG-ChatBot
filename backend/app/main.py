@@ -20,8 +20,8 @@ from app.rag import process_and_upsert_document, query_and_generate_answer
 async def lifespan(app: FastAPI):
     # Startup — create async clients
     app.state.openai = AsyncOpenAI(
-        api_key=settings.GEMINI_API_KEY,
-        base_url=settings.API_URL,
+        api_key=settings.OPENAI_API_KEY,
+        base_url=settings.OPENAI_BASE_URL,
     )
     pc = Pinecone(api_key=settings.PINECONE_API_KEY)
     app.state.pc = pc

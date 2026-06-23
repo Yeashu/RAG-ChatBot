@@ -128,7 +128,7 @@ async def query_and_generate_answer(
     ]
     
     completion = await openai_client.chat.completions.create(
-        model=settings.LLM_MODEL,
+        model=settings.OPENAI_MODEL,
         messages=messages
     )
     
