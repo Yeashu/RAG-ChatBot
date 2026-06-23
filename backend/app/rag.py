@@ -1,4 +1,5 @@
 import uuid
+import asyncio
 import fitz
 from openai import AsyncOpenAI
 from pinecone import Pinecone
@@ -54,44 +55,64 @@ async def process_and_upsert_document(
         page_texts = extract_text_from_pdf(file_bytes)
     elif content_type in ["text/plain", "text/csv"]:
         # For plain text or CSV, we treat the whole content as one "page" for simplicity
-        # or we could split by lines. For now, let's keep it simple.
         page_texts = [file_bytes.decode('utf-8', errors='ignore')]
     else:
         page_texts = []
     
-    vectors = []
-    chunk_count = 0
-    
+    # Collect all chunks across pages first
+    chunks_to_embed = []  # List of tuples: (page_num, chunk_index_in_page, chunk_text)
     for page_num, page_text in enumerate(page_texts, start=1):
         if not page_text.strip():
             continue
-            
         chunks = chunk_text(page_text)
-        if not chunks:
-            continue
+        for i, chunk in enumerate(chunks):
+            chunks_to_embed.append((page_num, i, chunk))
             
-        embeddings = await get_embeddings(openai_client, chunks)
+    if not chunks_to_embed:
+        return document_id, 0
+
+    # Batch embeddings creation
+    # Embed in batches of 64 to avoid HTTP request overhead or payload limits
+    batch_size = 64
+    batches = [chunks_to_embed[i:i + batch_size] for i in range(0, len(chunks_to_embed), batch_size)]
+    
+    # Limit concurrency of OpenRouter embedding calls using Semaphore
+    sem = asyncio.Semaphore(5)
+    
+    async def embed_with_semaphore(batch):
+        async with sem:
+            texts = [item[2] for item in batch]
+            return await get_embeddings(openai_client, texts)
+            
+    # Run batches concurrently
+    tasks = [embed_with_semaphore(b) for b in batches]
+    embeddings_list = await asyncio.gather(*tasks)
+    
+    # Flatten results and map to original chunks
+    all_embeddings = []
+    for emb_batch in embeddings_list:
+        all_embeddings.extend(emb_batch)
         
-        for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
-            vector_id = f"{document_id}-p{page_num}-c{i}"
-            vectors.append({
-                "id": vector_id,
-                "values": emb,
-                "metadata": {
-                    "document_id": document_id,
-                    "text": chunk,
-                    "page_number": page_num,
-                    "chunk_index": chunk_count
-                }
-            })
-            chunk_count += 1
-            
+    vectors = []
+    for chunk_count, (page_num, chunk_index_in_page, chunk) in enumerate(chunks_to_embed):
+        vector_id = f"{document_id}-p{page_num}-c{chunk_index_in_page}"
+        vectors.append({
+            "id": vector_id,
+            "values": all_embeddings[chunk_count],
+            "metadata": {
+                "document_id": document_id,
+                "text": chunk,
+                "page_number": page_num,
+                "chunk_index": chunk_count
+            }
+        })
+        
     if vectors:
-        batch_size = 100
-        for i in range(0, len(vectors), batch_size):
-            await pinecone_index.upsert(vectors=vectors[i:i + batch_size])
+        upsert_batch_size = 100
+        for i in range(0, len(vectors), upsert_batch_size):
+            await pinecone_index.upsert(vectors=vectors[i:i + upsert_batch_size])
             
-    return document_id, chunk_count
+    return document_id, len(vectors)
 
 async def query_and_generate_answer(
     openai_client: AsyncOpenAI,
